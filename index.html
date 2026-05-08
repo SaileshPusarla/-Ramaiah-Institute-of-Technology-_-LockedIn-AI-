@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LockedIn AI</title>
+
+<style>
+body{margin:0;font-family:'Segoe UI';background:#0b0f14;color:#e6edf3;}
+.menu-btn{position:fixed;top:18px;left:18px;z-index:1000;cursor:pointer;}
+.menu-btn div{width:26px;height:3px;background:white;margin:5px 0;}
+
+.sidebar{
+position:fixed;
+top:0;
+left:-260px;
+width:260px;
+height:100%;
+background:#11161d;
+padding:80px 20px;
+transition:0.3s;
+}
+
+.sidebar.active{left:0;}
+
+.sidebar div{
+cursor:pointer;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+padding:80px 20px;
+}
+
+.card{
+background:#161b22;
+padding:20px;
+border-radius:16px;
+margin-bottom:20px;
+}
+
+textarea{
+width:100%;
+height:80px;
+background:#0d1117;
+border:1px solid #30363d;
+color:white;
+border-radius:10px;
+padding:10px;
+box-sizing:border-box;
+font-family:'Segoe UI';
+}
+
+button{
+margin-top:10px;
+padding:10px 20px;
+background:#2ea043;
+border:none;
+border-radius:10px;
+color:white;
+cursor:pointer;
+font-family:'Segoe UI';
+font-size:14px;
+}
+
+.task{
+display:flex;
+justify-content:space-between;
+margin-top:10px;
+padding:10px;
+background:#0d1117;
+border-radius:10px;
+transition:0.3s;
+}
+
+.task-text.done{
+text-decoration:line-through;
+color:#8b949e;
+}
+
+.plan-box{
+margin-top:10px;
+background:#0d1117;
+padding:12px;
+border-radius:10px;
+min-height:120px;
+white-space:pre-wrap;
+overflow:auto;
+line-height:1.7;
+}
+
+.time-input{
+width:120px;
+margin-left:8px;
+background:#222;
+border:none;
+color:white;
+border-radius:5px;
+padding:3px;
+}
+
+.button-row{
+display:flex;
+gap:10px;
+margin-top:10px;
+align-items:center;
+flex-wrap:wrap;
+}
+
+.file-btn{
+padding:10px 20px;
+background:#2ea043;
+border:none;
+border-radius:10px;
+color:white;
+cursor:pointer;
+font-family:'Segoe UI';
+font-size:14px;
+display:inline-block;
+margin-top:10px;
+}
+
+.file-name{
+margin-left:10px;
+font-size:14px;
+color:#8b949e;
+}
+
+input[type="file"]{
+display:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="menu-btn" onclick="toggleMenu()">
+<div></div>
+<div></div>
+<div></div>
+</div>
+
+<div class="sidebar" id="sidebar">
+<h2>🚀 LockedIn AI</h2>
+<div onclick="closeMenu()">Dashboard</div>
+<div onclick="goProfile()">Profile</div>
+</div>
+
+<div class="container">
+
+<h1>🚀 LockedIn AI</h1>
+
+<div class="card">
+
+<h3>📝 Add Tasks</h3>
+
+<textarea id="input"></textarea>
+
+<button onclick="addTask()">Add</button>
+
+</div>
+
+<div class="card">
+
+<h3>🧠 Task Memory Layer</h3>
+
+<div id="tasks"></div>
+
+</div>
+
+<div class="card">
+
+<h3>⚡ Planning Engine</h3>
+
+<div class="button-row">
+<button onclick="generatePlan()">Generate Plan</button>
+<button onclick="stopGeneration()">⛔ Stop</button>
+</div>
+
+<div id="planOutput" class="plan-box"></div>
+
+<textarea 
+id="tweakInput" 
+placeholder="Modify or refine the generated plan..."
+></textarea>
+
+<button onclick="tweakPlan()">Update Plan</button>
+
+<h3>🧠 Interactive Reasoning Module</h3>
+
+<textarea 
+id="queryInput" 
+placeholder="Enter your academic query or doubt..."
+></textarea>
+
+<div class="button-row">
+<button onclick="askQuery()">Ask</button>
+<button onclick="stopGeneration()">⛔ Stop</button>
+</div>
+
+<div id="queryResponse" class="plan-box"></div>
+
+</div>
+
+<div class="card">
+
+<h3>📄 Knowledge Processing Module</h3>
+
+<div class="button-row">
+
+<label class="file-btn">
+Upload Document
+<input 
+type="file" 
+id="pdfUpload" 
+accept=".txt,.md"
+onchange="showFileName()"
+>
+</label>
+
+<span id="fileName" class="file-name">
+No document selected
+</span>
+
+</div>
+
+<textarea 
+id="pdfPrompt" 
+placeholder="Provide optional instructions (e.g., summarize concepts, extract formulas, highlight important topics)..."
+></textarea>
+
+<div class="button-row">
+<button onclick="handlePDF()">Summarize</button>
+<button onclick="stopGeneration()">⛔ Stop</button>
+</div>
+
+<div id="pdfOutput" class="plan-box"></div>
+
+</div>
+
+</div>
+
+<script>
+
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+let controller = null;
+
+let isRunning = false;
+
+function save(){
+
+localStorage.setItem(
+"tasks",
+JSON.stringify(tasks)
+);
+
+}
+
+function toggleMenu(){
+
+document
+.getElementById("sidebar")
+.classList.toggle("active");
+
+}
+
+function closeMenu(){
+
+document
+.getElementById("sidebar")
+.classList.remove("active");
+
+}
+
+function goProfile(){
+
+window.location.href="./profile.html";
+
+}
+
+function addTask(){
+
+const val =
+document.getElementById("input").value;
+
+val.split(/\n|,/).forEach(t=>{
+
+if(t.trim()){
+
+tasks.push({
+text:t.trim(),
+done:false
+});
+
+}
+
+});
+
+document.getElementById("input").value="";
+
+save();
+
+render();
+
+}
+
+function render(){
+
+const box =
+document.getElementById("tasks");
+
+box.innerHTML="";
+
+tasks.forEach((t,i)=>{
+
+box.innerHTML += `
+<div class="task">
+
+<span class="task-text ${t.done?'done':''}">
+${t.text}
+</span>
+
+<div>
+<input type="checkbox" onchange="completeTask(${i},this)">
+<input class="time-input" placeholder="time taken">
+</div>
+
+</div>
+`;
+
+});
+
+}
+
+function completeTask(i,el){
+
+tasks[i].done = true;
+
+save();
+
+const row =
+el.parentElement.parentElement;
+
+row.querySelector("span")
+.classList.add("done");
+
+setTimeout(()=>{
+
+row.style.opacity="0";
+row.style.transform="translateX(20px)";
+
+setTimeout(()=>{
+
+tasks.splice(i,1);
+
+save();
+
+render();
+
+},400);
+
+},400);
+
+}
+
+function showFileName(){
+
+const file =
+document.getElementById("pdfUpload").files[0];
+
+document.getElementById("fileName").innerText =
+file ? file.name : "No document selected";
+
+}
+
+function stopGeneration(){
+
+if(controller){
+
+controller.abort();
+
+isRunning=false;
+
+}
+
+}
+
+async function runAI(prompt, outputId, maxTokens=250){
+
+if(isRunning) return;
+
+isRunning=true;
+
+controller = new AbortController();
+
+const output =
+document.getElementById(outputId);
+
+output.innerText="⚡ Generating...";
+
+try{
+
+const res = await fetch(
+"http://127.0.0.1:11434/api/generate",
+{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+model:"qwen2.5:3b",
+
+prompt:prompt,
+
+stream:true,
+
+options:{
+temperature:0.05,
+top_p:0.2,
+repeat_penalty:1.1,
+num_predict:maxTokens,
+num_ctx:2048,
+num_thread:8
+}
+
+}),
+
+signal:controller.signal
+
+});
+
+const reader = res.body.getReader();
+
+const decoder = new TextDecoder();
+
+let finalText="";
+
+while(true){
+
+const {done,value} =
+await reader.read();
+
+if(done) break;
+
+const chunk =
+decoder.decode(value);
+
+const lines =
+chunk.split("\n");
+
+for(const line of lines){
+
+if(!line.trim()) continue;
+
+try{
+
+const parsed = JSON.parse(line);
+
+if(parsed.response){
+
+finalText += parsed.response;
+
+output.innerText = finalText;
+
+}
+
+}catch(err){}
+
+}
+
+}
+
+output.innerText = finalText.trim();
+
+}catch(err){
+
+output.innerText =
+"⛔ Generation stopped";
+
+}
+
+isRunning=false;
+
+}
+
+function generatePlan(){
+
+if(tasks.length===0){
+
+document
+.getElementById("planOutput")
+.innerText="Add tasks first.";
+
+return;
+
+}
+
+let taskList = "";
+
+tasks.forEach((t,i)=>{
+taskList += `${i+1}. ${t.text}\n`;
+});
+
+runAI(`
+
+You are a smart academic planning assistant.
+
+Create a clean realistic timetable.
+
+RULES:
+- ONLY use provided tasks
+- Prioritize exams first
+- Keep output short
+- No emojis
+- No markdown
+- No explanations
+- No weird symbols
+- No extra commentary
+- Simple readable format
+
+FORMAT:
+
+7:00 PM - 9:00 PM : Task Name
+
+TASKS:
+${taskList}
+
+ONLY timetable.
+
+`, "planOutput", 220);
+
+}
+
+async function tweakPlan(){
+
+if(isRunning){
+stopGeneration();
+}
+
+const tweak =
+document.getElementById("tweakInput").value.trim();
+
+const existingPlan =
+document.getElementById("planOutput").innerText.trim();
+
+if(!tweak){
+alert("Enter modification request");
+return;
+}
+
+runAI(`
+
+You are modifying a student timetable.
+
+ONLY return the UPDATED timetable.
+
+STRICT RULES:
+- Keep same tasks
+- Adjust timings intelligently
+- No explanations
+- No markdown
+- No bullet points
+- No emojis
+- No extra text
+
+CURRENT TIMETABLE:
+${existingPlan}
+
+MODIFICATION REQUEST:
+${tweak}
+
+OUTPUT FORMAT:
+
+7:00 PM - 9:00 PM : Task Name
+
+ONLY updated timetable.
+
+`, "planOutput", 180);
+
+}
+
+function askQuery(){
+
+const q =
+document.getElementById("queryInput")
+.value;
+
+if(!q.trim()) return;
+
+runAI(`
+
+Answer professionally and clearly.
+
+RULES:
+- concise
+- academic
+- no emojis
+- no unnecessary text
+
+QUESTION:
+${q}
+
+`, "queryResponse", 250);
+
+}
+
+async function handlePDF(){
+
+const file =
+document.getElementById("pdfUpload")
+.files[0];
+
+const prompt =
+document.getElementById("pdfPrompt")
+.value;
+
+if(!file){
+
+alert("Upload document first");
+
+return;
+
+}
+
+document.getElementById("pdfOutput")
+.innerText =
+"📄 Processing document...";
+
+try{
+
+const text = await file.text();
+
+const cleaned = text
+.replace(/\s+/g,' ')
+.slice(0,3500);
+
+runAI(`
+
+Summarize these academic notes.
+
+RULES:
+- bullet points only
+- concise but complete
+- academic only
+- no metadata
+- no emojis
+- no weird formatting
+- highlight important concepts
+
+USER REQUEST:
+${prompt}
+
+CONTENT:
+${cleaned}
+
+`, "pdfOutput", 450);
+
+}catch(err){
+
+document.getElementById("pdfOutput")
+.innerText =
+"❌ Unable to process document";
+
+}
+
+}
+
+render();
+
+</script>
+
+</body>
+</html>
