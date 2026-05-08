@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LockedIn AI Profile</title>
+
+<style>
+
+body{
+margin:0;
+font-family:'Segoe UI';
+background:#0b0f14;
+color:#e6edf3;
+}
+
+.container{
+max-width:800px;
+margin:auto;
+padding:60px 20px;
+}
+
+.card{
+background:#161b22;
+padding:25px;
+border-radius:16px;
+margin-bottom:20px;
+}
+
+h1,h2{
+margin-top:0;
+}
+
+button{
+padding:10px 20px;
+background:#2ea043;
+border:none;
+border-radius:10px;
+color:white;
+cursor:pointer;
+font-size:14px;
+font-family:'Segoe UI';
+}
+
+input{
+width:100%;
+padding:12px;
+margin-top:10px;
+background:#0d1117;
+border:1px solid #30363d;
+border-radius:10px;
+color:white;
+box-sizing:border-box;
+}
+
+.profile-box{
+margin-top:20px;
+line-height:1.8;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="card">
+
+<h1>👤 Profile</h1>
+
+<input type="text" id="name" placeholder="Enter Name">
+
+<input type="text" id="college" placeholder="Enter College">
+
+<input type="text" id="branch" placeholder="Enter Branch">
+
+<button onclick="saveProfile()">Save Profile</button>
+
+</div>
+
+<div class="card">
+
+<h2>📘 Student Information</h2>
+
+<div class="profile-box" id="profileOutput">
+
+No profile data saved.
+
+</div>
+
+</div>
+
+<button onclick="goBack()">⬅ Back to Dashboard</button>
+
+</div>
+
+<script>
+
+function saveProfile(){
+
+const profile = {
+
+name:document.getElementById("name").value,
+
+college:document.getElementById("college").value,
+
+branch:document.getElementById("branch").value
+
+};
+
+localStorage.setItem(
+"profile",
+JSON.stringify(profile)
+);
+
+loadProfile();
+
+}
+
+function loadProfile(){
+
+const profile = JSON.parse(
+localStorage.getItem("profile")
+);
+
+if(!profile) return;
+
+document.getElementById("profileOutput").innerHTML = `
+
+<b>Name:</b> ${profile.name}<br>
+<b>College:</b> ${profile.college}<br>
+<b>Branch:</b> ${profile.branch}
+
+`;
+
+}
+
+function goBack(){
+
+window.location.href="./index.html";
+
+}
+
+loadProfile();
+
+</script>
+
+</body>
+</html>
